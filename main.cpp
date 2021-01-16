@@ -19,11 +19,28 @@
 using namespace std;
 using namespace cli;
 
-int main() {
-	system("title C++ Command Line");
-	cout << "Command Line created by C++20: "<< cmdline_version << endl;
-	
-	while (true) command_line::read_command();
+int main(int argc, char *argv[]) {
+	/* check if a file is passed to execute */
+	if (argc == 2) {
+		ifstream file(argv[1]);
+		string line;
+		
+		if (!file) {
+			cout << '\'' << argv[1] << '\'' << " is not a valid file path" << endl;
+			system("pause");
+			return 0;
+		}
+		
+		while (getline(file, line)) {
+			command_line::read_command(line);
+		}
+	} else {
+		/* standard command line functionality */
+		system("title C++ Command Line");
+		cout << "Command Line created by C++20: " << cmdline_version << endl;
+		
+		while (true) command_line::read_command();
+	}
 	
 	return 0;
 }

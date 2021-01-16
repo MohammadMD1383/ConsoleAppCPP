@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <map>
 #include <list>
@@ -17,6 +18,16 @@ namespace cli {
 	void command_commands(const string &);
 	
 	/**
+	 * gets or sets the bool 'cmdline_output_errors'
+	 */
+	void command_errors(const string &);
+	
+	/**
+	 * gets or sets the bool 'cmdline_start_showing'
+	 */
+	void command_echo(const string &);
+	
+	/**
 	 * exits the program
 	 */
 	void command_exit(const string &);
@@ -32,9 +43,14 @@ namespace cli {
 	void command_clear(const string &);
 	
 	/**
-	 * print a text with or without variables
+	 * prints a text with or without variables
 	 */
 	void command_print(const string &);
+	
+	/**
+	 * prints a text with or without variables without new line
+	 */
+	void command_print_i(const string &);
 	
 	/**
 	 * defines or changes a variable
@@ -51,13 +67,21 @@ namespace cli {
 	 */
 	void command_show(const string &);
 	
+	/**
+	 * prints some predefined variables with 0 or more args without new line
+	 */
+	void command_show_i(const string &);
+	
 	/* commands map */
 	map<string, void (*)(const string &)> commands = {
 		{"commands",  command_commands},
+		{"error",     command_errors},
+		{"echo",      command_echo},
 		{"exit",      command_exit},
 		{"pause",     command_pause},
 		{"clear",     command_clear},
 		{"print",     command_print},
+		{"print_i",   command_print_i},
 		{"var",       command_var},
 		{"var_unset", command_var_unset},
 		{"show",      command_show}
@@ -66,9 +90,12 @@ namespace cli {
 	/* the description of commands */
 	map<string, string> definitions = {
 		{"exit",      "closes the console"},
+		{"error",     "gets or sets the error level"},
+		{"echo",      "gets or sets the echo level"},
 		{"pause",     "pauses the console"},
 		{"clear",     "clears the console"},
 		{"print",     "prints a text"},
+		{"print_i",   "prints a text without new line"},
 		{"var",       "defines or changes a variable"},
 		{"var_unset", "destroys a variable"},
 		{"show",      "shows the specified system variable"}
@@ -78,9 +105,10 @@ namespace cli {
 	map<string, string> variables;
 	
 	/* command line properties */
-	static string cmdline_version = "1.2.0";
+	static string cmdline_version = "1.3.1";
 	static string cmdline_start = "CLI>";
 	static bool cmdline_start_showing = true;
+	static bool cmdline_output_errors = true;
 	
 	/* command line class */
 	class command_line {
@@ -102,8 +130,36 @@ namespace cli {
 			if (commands.find(cmd) != commands.end()) {
 				commands[cmd](args);
 			} else if (!cmd.empty()) {
-				cout << "unknown command" << endl;
+				error_out("unknown command");
 			}
+		}
+		
+		/**
+		 * interpret command from given parameter
+		 *
+		 * @param _command the command to be interpreted
+		 */
+		static void read_command(const string &_command) {
+			util::trim(const_cast<string *>(&_command));
+			string cmd = _command.substr(0, _command.find(' '));
+			string args = _command.substr(_command.find_first_of(" \t") + 1);
+			util::trim(&args);
+			args = args == cmd ? "" : args;
+			
+			if (commands.find(cmd) != commands.end()) {
+				commands[cmd](args);
+			} else if (!cmd.empty()) {
+				error_out("unknown command");
+			}
+		}
+		
+		/**
+		 * outputs errors
+		 *
+		 * @param err the error text
+		 */
+		static void error_out(const string &err) {
+			if (cmdline_output_errors) cout << err << endl;
 		}
 	};
 	
@@ -112,6 +168,20 @@ namespace cli {
 		for (auto &definition : definitions) {
 			cout << definition.first << "\t" << definition.second << endl;
 		}
+	}
+	
+	void command_errors(const string &args) {
+		if (args.empty()) cout << (int) cmdline_output_errors << endl;
+		else if (args == "0") cmdline_output_errors = false;
+		else if (args == "1") cmdline_output_errors = true;
+		else command_line::error_out("wrong error level");
+	}
+	
+	void command_echo(const string &args) {
+		if (args.empty()) cout << (int) cmdline_start_showing << endl;
+		else if (args == "0") cmdline_start_showing = false;
+		else if (args == "1") cmdline_start_showing = true;
+		else command_line::error_out("wrong echo level");
 	}
 	
 	void command_exit(const string &args) {
@@ -132,26 +202,35 @@ namespace cli {
 		cout << temp << endl;
 	}
 	
+	void command_print_i(const string &args) {
+		string temp = args;
+		util::replace_with_var(temp, variables);
+		cout << temp;
+	}
+	
 	void command_var(const string &args) {
 		string key = args.substr(0, args.find(' '));
 		if (key.empty()) {
-			cout << "variable name and value missing" << endl;
+			command_line::error_out("variable name and value missing");
 			return;
 		}
 		
 		string value = args.substr(args.find_first_of(" \t") + 1);
 		util::trim(&value);
 		if (value == key) {
-			cout << "variable value missing" << endl;
+			command_line::error_out("variable value missing");
 			return;
 		}
+		
+		if (value == "+input") getline(cin, value);
 		
 		variables[key] = value;
 	}
 	
 	void command_var_unset(const string &args) {
 		if (args.empty()) {
-			cout << "no variable mentioned" << endl;
+			command_line::error_out("no variable mentioned");
+			return;
 		}
 		
 		list arg_list = util::split_string_space(args);
@@ -178,7 +257,10 @@ namespace cli {
 				else if (param == "m") strcpy_s(time_format, sizeof(time_format), "%a - %F");
 				else if (param == "l") strcpy_s(time_format, sizeof(time_format), "%a - %b %d, %Y");
 				else if (param == "f") strcpy_s(time_format, sizeof(time_format), "%A - %d of %B, %Y");
-				else strcpy_s(time_format, sizeof(time_format), "wrong date format");
+				else {
+					command_line::error_out("wrong date format");
+					return;
+				}
 				
 				strftime(time_buffer, sizeof(time_buffer), time_format, &t_struct);
 				cout << time_buffer << endl;
@@ -199,7 +281,10 @@ namespace cli {
 					strftime(time_buffer, sizeof(time_buffer), "%X", &t_struct);
 					cout << time_buffer << endl;
 				} else if (param == "l") system("echo %time%");
-				else cout << "wrong time format" << endl;
+				else {
+					command_line::error_out("wrong time format");
+					return;
+				}
 			}},
 			
 			/**
@@ -230,7 +315,7 @@ namespace cli {
 		if (subcommands.find(subcommand) != subcommands.end()) {
 			subcommands[subcommand](param);
 		} else {
-			cout << '\'' << subcommand << '\'' << " is not defined in command 'show'" << endl;
+			command_line::error_out('\'' + subcommand + '\'' + " is not defined in command 'show'");
 		}
 	}
 }
