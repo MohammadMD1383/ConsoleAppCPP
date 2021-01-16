@@ -10,7 +10,7 @@
  * change it to something like 'unofficial X.X.X'.         *
  * ------------------------------------------------------- *
  * the command line published at my own repository         *
- * https://github.com/MohammadMD1383/                      *
+ * https://github.com/MohammadMD1383/ConsoleAppCPP/        *
  * won't contain any harmful or dangerous commands.        *
  ***********************************************************/
 
