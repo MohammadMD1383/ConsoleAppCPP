@@ -5,6 +5,7 @@
 #include <list>
 #include <chrono>
 #include <iomanip>
+#include <regex>
 #include "util.h"
 
 using namespace std;
@@ -199,12 +200,14 @@ namespace cli {
 	void command_print(const string &args) {
 		string temp = args;
 		util::replace_with_var(temp, variables);
+		util::replace_with_special_chars(&temp);
 		cout << temp << endl;
 	}
 	
 	void command_print_i(const string &args) {
 		string temp = args;
 		util::replace_with_var(temp, variables);
+		util::replace_with_special_chars(&temp);
 		cout << temp;
 	}
 	
