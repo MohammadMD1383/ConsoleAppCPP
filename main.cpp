@@ -20,6 +20,8 @@ using namespace std;
 using namespace cli;
 
 int main(int argc, char *argv[]) {
+	system("title C++ Command Line");
+	
 	/* check if a file is passed to execute */
 	if (argc == 2) {
 		ifstream file(argv[1]);
@@ -36,8 +38,7 @@ int main(int argc, char *argv[]) {
 		}
 	} else {
 		/* standard command line functionality */
-		system("title C++ Command Line");
-		cout << "Command Line created by C++20: " << cmdline_version << endl;
+		cout << "Command Line created by C++20: V" << cmdline_version << endl;
 		
 		while (true) command_line::read_command();
 	}
