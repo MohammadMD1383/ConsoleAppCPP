@@ -4,8 +4,7 @@
 #include <map>
 #include <list>
 #include <chrono>
-#include <iomanip>
-#include <regex>
+#include "system_vars.h"
 #include "util.h"
 
 using namespace std;
@@ -85,7 +84,8 @@ namespace cli {
 		{"print_i",   command_print_i},
 		{"var",       command_var},
 		{"var_unset", command_var_unset},
-		{"show",      command_show}
+		{"show",      command_show},
+		{"show_i",    command_show_i}
 	};
 	
 	/* the description of commands */
@@ -99,14 +99,15 @@ namespace cli {
 		{"print_i",   "prints a text without new line"},
 		{"var",       "defines or changes a variable"},
 		{"var_unset", "destroys a variable"},
-		{"show",      "shows the specified system variable"}
+		{"show",      "shows the specified system variable"},
+		{"show_i",    "shows the specified system variable without new line"}
 	};
 	
 	/* command line variables */
 	map<string, string> variables;
 	
 	/* command line properties */
-	static string cmdline_version = "1.3.1";
+	static string cmdline_version = "1.3.3";
 	static string cmdline_start = "CLI>";
 	static bool cmdline_start_showing = true;
 	static bool cmdline_output_errors = true;
@@ -247,47 +248,19 @@ namespace cli {
 			 * prints the date in 4 different formats. args: s/m/l/f
 			 */
 			{"date",     [](const string &param) {
-				auto now = system_clock::now();
-				time_t time = system_clock::to_time_t(now);
-				
-				struct tm t_struct;
-				localtime_s(&t_struct, &time);
-				
-				char time_format[50];
-				char time_buffer[100];
-				
-				if (param == "s" || param.empty()) strcpy_s(time_format, sizeof(time_format), "%F");
-				else if (param == "m") strcpy_s(time_format, sizeof(time_format), "%a - %F");
-				else if (param == "l") strcpy_s(time_format, sizeof(time_format), "%a - %b %d, %Y");
-				else if (param == "f") strcpy_s(time_format, sizeof(time_format), "%A - %d of %B, %Y");
-				else {
-					command_line::error_out("wrong date format");
-					return;
-				}
-				
-				strftime(time_buffer, sizeof(time_buffer), time_format, &t_struct);
-				cout << time_buffer << endl;
+				string date = system_vars::command_show_date(param);
+				if (!date.empty()) cout << date << endl;
+				else command_line::error_out("wrong date format");
 			}},
 			
 			/**
 			 * prints the time in 2 different formats. args: s/l
 			 */
 			{"time",     [](const string &param) {
-				auto now = system_clock::now();
-				time_t time = system_clock::to_time_t(now);
-				
-				struct tm t_struct;
-				localtime_s(&t_struct, &time);
-				
-				if (param == "s" || param.empty()) {
-					char time_buffer[50];
-					strftime(time_buffer, sizeof(time_buffer), "%X", &t_struct);
-					cout << time_buffer << endl;
-				} else if (param == "l") system("echo %time%");
-				else {
-					command_line::error_out("wrong time format");
-					return;
-				}
+				string time = system_vars::command_show_time(param);
+				if (time == "echo") system("echo %time%");
+				else if (!time.empty()) cout << time << endl;
+				else command_line::error_out("wrong time format");
 			}},
 			
 			/**
@@ -302,6 +275,60 @@ namespace cli {
 			 */
 			{"version",  [](const string &) {
 				cout << cmdline_version << endl;
+			}},
+		};
+		
+		/* functionality of show command here */
+		size_t first = args.find_first_of(' ');
+		string subcommand = args;
+		string param;
+		if (first != string::npos) {
+			subcommand = args.substr(0, first);
+			param = args.substr(first);
+			util::trim(&param);
+		}
+		
+		if (subcommands.find(subcommand) != subcommands.end()) {
+			subcommands[subcommand](param);
+		} else {
+			command_line::error_out('\'' + subcommand + '\'' + " is not defined in command 'show'");
+		}
+	}
+	
+	void command_show_i(const string &args) {
+		/* the map of show's subcommands */
+		static map<string, void (*)(const string &)> subcommands = {
+			/**
+			 * prints the date in 4 different formats. args: s/m/l/f
+			 */
+			{"date",     [](const string &param) {
+				string date = system_vars::command_show_date(param);
+				if (!date.empty()) cout << date;
+				else command_line::error_out("wrong date format");
+			}},
+			
+			/**
+			 * prints the time in 2 different formats. args: s/l
+			 */
+			{"time",     [](const string &param) {
+				string time = system_vars::command_show_time(param);
+				if (time == "echo") system("echo | set /p=%time%");
+				else if (!time.empty()) cout << time;
+				else command_line::error_out("wrong time format");
+			}},
+			
+			/**
+			 * prints both date and time with no args.
+			 */
+			{"datetime", [](const string &param) {
+				system("echo | set /p=%date% %time%");
+			}},
+			
+			/**
+			 * prints the CLI version
+			 */
+			{"version",  [](const string &) {
+				cout << cmdline_version;
 			}},
 		};
 		
