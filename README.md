@@ -12,7 +12,7 @@
 + `var` - defines or changes a variable
 + `var_unset` - unsets a variable
 + `show` - prints predefined variables
-+ `show_i` - prints ppredefined variables without new line
++ `show_i` - prints predefined variables without new line
 > no harmful or dangerous commands included
 
 ### file interpreter
