@@ -7,12 +7,12 @@ namespace util {
 	 * @param str the string to be trimmed
 	 * @return trimmed string
 	 */
-	string trim(const string &str) {
-		size_t first = str.find_first_not_of(' ');
-		if (string::npos == first) return str;
-		size_t last = str.find_last_not_of(' ');
-		return str.substr(first, (last - first + 1));
-	}
+	// string trim(const string &str) {
+	// 	size_t first = str.find_first_not_of(' ');
+	// 	if (string::npos == first) return str;
+	// 	size_t last = str.find_last_not_of(' ');
+	// 	return str.substr(first, (last - first + 1));
+	// }
 	
 	/**
 	 * trims both sides of a string and applies it on source
@@ -84,5 +84,12 @@ namespace util {
 		temp.erase(0, end_point);
 		trim(&temp);
 		goto again;
+	}
+	
+	void replace_with_special_chars(string *str) {
+		size_t pos;
+		while ((pos = str->find("\\s")) != string::npos) str->replace(pos, 2, " ");
+		while ((pos = str->find("\\t")) != string::npos) str->replace(pos, 2, "\t");
+		while ((pos = str->find("\\n")) != string::npos) str->replace(pos, 2, "\n");
 	}
 }
