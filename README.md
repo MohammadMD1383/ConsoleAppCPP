@@ -2,9 +2,9 @@
 
 ### current commands include:
 + `commands` - shows available commands 
-+ `exit` - exit console
 + `error` - sets the error level
 + `echo` - sets the command line start showing level
++ `exit` - exit console
 + `pause` - pauses console until keypress
 + `clear` - clears the console
 + `print` - prints a text
@@ -13,6 +13,9 @@
 + `var_unset` - unsets a variable
 + `show` - prints predefined variables
 + `show_i` - prints predefined variables without new line
++ `math` - evaluates and prints math expressions
++ `math_i` - evaluates and prints math expressions without new line
++ `math_var` - evaluates a math expression inside a variable and replaces the expression with the result
 > no harmful or dangerous commands included
 
 ### file interpreter

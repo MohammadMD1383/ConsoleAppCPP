@@ -5,6 +5,7 @@
 #include <list>
 #include <chrono>
 #include "system_vars.h"
+#include "exprtk.hpp"
 #include "util.h"
 
 using namespace std;
@@ -72,6 +73,21 @@ namespace cli {
 	 */
 	void command_show_i(const string &);
 	
+	/**
+	 * evaluates math expressions and prints it
+	 */
+	void command_math(const string &);
+	
+	/**
+	 * evaluates math expressions and prints it without new line
+	 */
+	void command_math_i(const string &);
+	
+	/**
+	 * evaluates math expression inside a variable and replaces the expression with the result
+	 */
+	void command_math_var(const string &);
+	
 	/* commands map */
 	map<string, void (*)(const string &)> commands = {
 		{"commands",  command_commands},
@@ -85,7 +101,10 @@ namespace cli {
 		{"var",       command_var},
 		{"var_unset", command_var_unset},
 		{"show",      command_show},
-		{"show_i",    command_show_i}
+		{"show_i",    command_show_i},
+		{"math",      command_math},
+		{"math_i",    command_math_i},
+		{"math_var",  command_math_var}
 	};
 	
 	/* the description of commands */
@@ -100,7 +119,10 @@ namespace cli {
 		{"var",       "defines or changes a variable"},
 		{"var_unset", "destroys a variable"},
 		{"show",      "shows the specified system variable"},
-		{"show_i",    "shows the specified system variable without new line"}
+		{"show_i",    "shows the specified system variable without new line"},
+		{"math",      "evaluates math expressions and prints it"},
+		{"math_i",    "evaluates math expressions and prints it without new line"},
+		{"math_var",  "evaluates math expression inside a variable and replaces the expression with the result"}
 	};
 	
 	/* command line variables */
@@ -198,18 +220,23 @@ namespace cli {
 		system("cls");
 	}
 	
-	void command_print(const string &args) {
-		string temp = args;
-		util::replace_with_var(temp, variables);
-		util::replace_with_special_chars(&temp);
-		cout << temp << endl;
-	}
-	
-	void command_print_i(const string &args) {
+	/**
+	 * the base functionality for print command
+	 */
+	void base_command_print(const string &args, const bool &add_end_l) {
 		string temp = args;
 		util::replace_with_var(temp, variables);
 		util::replace_with_special_chars(&temp);
 		cout << temp;
+		if (add_end_l)cout << endl;
+	}
+	
+	void command_print(const string &args) {
+		base_command_print(args, true);
+	}
+	
+	void command_print_i(const string &args) {
+		base_command_print(args, false);
 	}
 	
 	void command_var(const string &args) {
@@ -241,40 +268,51 @@ namespace cli {
 		for (const auto &arg : arg_list) variables.erase(arg);
 	}
 	
-	void command_show(const string &args) {
+	/**
+	 * the base functionality for show command
+	 */
+	void base_command_show(const string &args, const bool &add_end_l) {
 		/* the map of show's subcommands */
-		static map<string, void (*)(const string &)> subcommands = {
+		static map<string, void (*)(const string &, const bool &)> subcommands = {
 			/**
 			 * prints the date in 4 different formats. args: s/m/l/f
 			 */
-			{"date",     [](const string &param) {
-				string date = system_vars::command_show_date(param);
-				if (!date.empty()) cout << date << endl;
-				else command_line::error_out("wrong date format");
+			{"date",     [](const string &param, const bool &add_end_l) {
+				string date = system_vars::base_command_show_date(param);
+				if (!date.empty()) {
+					cout << date;
+					if (add_end_l) cout << endl;
+				} else command_line::error_out("wrong date format");
 			}},
 			
 			/**
 			 * prints the time in 2 different formats. args: s/l
 			 */
-			{"time",     [](const string &param) {
-				string time = system_vars::command_show_time(param);
-				if (time == "echo") system("echo %time%");
-				else if (!time.empty()) cout << time << endl;
-				else command_line::error_out("wrong time format");
+			{"time",     [](const string &param, const bool &add_end_l) {
+				string time = system_vars::base_command_show_time(param);
+				if (time == "echo") {
+					if (add_end_l)system("echo %time%");
+					else system("echo | set /p=%time%");
+				} else if (!time.empty()) {
+					cout << time;
+					if (add_end_l)cout << endl;
+				} else command_line::error_out("wrong time format");
 			}},
 			
 			/**
 			 * prints both date and time with no args.
 			 */
-			{"datetime", [](const string &param) {
-				system("echo %date% %time%");
+			{"datetime", [](const string &param, const bool &add_end_l) {
+				if (add_end_l) system("echo %date% %time%");
+				else system("echo | set /p=%date% %time%");
 			}},
 			
 			/**
 			 * prints the CLI version
 			 */
-			{"version",  [](const string &) {
-				cout << cmdline_version << endl;
+			{"version",  [](const string &, const bool &add_end_l) {
+				cout << cmdline_version;
+				if (add_end_l) cout << endl;
 			}},
 		};
 		
@@ -289,63 +327,54 @@ namespace cli {
 		}
 		
 		if (subcommands.find(subcommand) != subcommands.end()) {
-			subcommands[subcommand](param);
+			subcommands[subcommand](param, add_end_l);
 		} else {
 			command_line::error_out('\'' + subcommand + '\'' + " is not defined in command 'show'");
 		}
 	}
 	
+	void command_show(const string &args) {
+		base_command_show(args, true);
+	}
+	
 	void command_show_i(const string &args) {
-		/* the map of show's subcommands */
-		static map<string, void (*)(const string &)> subcommands = {
-			/**
-			 * prints the date in 4 different formats. args: s/m/l/f
-			 */
-			{"date",     [](const string &param) {
-				string date = system_vars::command_show_date(param);
-				if (!date.empty()) cout << date;
-				else command_line::error_out("wrong date format");
-			}},
-			
-			/**
-			 * prints the time in 2 different formats. args: s/l
-			 */
-			{"time",     [](const string &param) {
-				string time = system_vars::command_show_time(param);
-				if (time == "echo") system("echo | set /p=%time%");
-				else if (!time.empty()) cout << time;
-				else command_line::error_out("wrong time format");
-			}},
-			
-			/**
-			 * prints both date and time with no args.
-			 */
-			{"datetime", [](const string &param) {
-				system("echo | set /p=%date% %time%");
-			}},
-			
-			/**
-			 * prints the CLI version
-			 */
-			{"version",  [](const string &) {
-				cout << cmdline_version;
-			}},
-		};
+		base_command_show(args, false);
+	}
+	
+	/**
+	 * the base functionality for math command
+	 */
+	void base_command_math(const string &args, const bool &add_end_l) {
+		exprtk::expression<double> exp;
+		exprtk::parser<double>().compile(args, exp);
+		double result = exp.value();
 		
-		/* functionality of show command here */
-		size_t first = args.find_first_of(' ');
-		string subcommand = args;
-		string param;
-		if (first != string::npos) {
-			subcommand = args.substr(0, first);
-			param = args.substr(first);
-			util::trim(&param);
+		if (to_string(result) == "nan") {
+			command_line::error_out("invalid expression");
+			return;
 		}
-		
-		if (subcommands.find(subcommand) != subcommands.end()) {
-			subcommands[subcommand](param);
-		} else {
-			command_line::error_out('\'' + subcommand + '\'' + " is not defined in command 'show'");
-		}
+		cout << result;
+		if (add_end_l) cout << endl;
+	}
+	
+	void command_math(const string &args) {
+		base_command_math(args, true);
+	}
+	
+	void command_math_i(const string &args) {
+		base_command_math(args, false);
+	}
+	
+	void command_math_var(const string &args) {
+		if (variables.find(args) != variables.end()) {
+			exprtk::expression<double> exp;
+			exprtk::parser<double>().compile(variables[args], exp);
+			string result = to_string(exp.value());
+			
+			result.erase(result.find_last_not_of('0') + 1);
+			result.erase(result.find_last_not_of('.') + 1);
+			
+			variables[args] = result;
+		} else command_line::error_out("variable not found");
 	}
 }

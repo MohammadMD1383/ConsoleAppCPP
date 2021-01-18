@@ -2,7 +2,7 @@ using namespace std;
 using namespace chrono;
 
 namespace cli::system_vars {
-	string command_show_date(const string &param) {
+	string base_command_show_date(const string &param) {
 		auto now = system_clock::now();
 		time_t time = system_clock::to_time_t(now);
 		
@@ -22,7 +22,7 @@ namespace cli::system_vars {
 		return time_buffer;
 	}
 	
-	string command_show_time(const string &param) {
+	string base_command_show_time(const string &param) {
 		auto now = system_clock::now();
 		time_t time = system_clock::to_time_t(now);
 		
