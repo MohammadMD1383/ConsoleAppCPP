@@ -10,7 +10,9 @@
 + `print` - prints a text
 + `print_i` - prints a text without new line
 + `var` - defines or changes a variable
-+ `var_unset` - unsets a variable
++ `var_merge` - concatenates the second variable with first one
++ `var_copy` - copies the second variable to first one
++ `var_unset` - unsets and destroys a variable
 + `show` - prints predefined variables
 + `show_i` - prints predefined variables without new line
 + `math` - evaluates and prints math expressions
