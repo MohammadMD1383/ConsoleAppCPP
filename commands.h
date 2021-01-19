@@ -59,6 +59,16 @@ namespace cli {
 	void command_var(const string &);
 	
 	/**
+	 * concatenates the second variable with first one
+	 */
+	void command_var_merge(const string &);
+	
+	/**
+	 * copies the second variable to first one
+	 */
+	void command_var_copy(const string &);
+	
+	/**
 	 * unsets a variable
 	 */
 	void command_var_unset(const string &);
@@ -99,6 +109,8 @@ namespace cli {
 		{"print",     command_print},
 		{"print_i",   command_print_i},
 		{"var",       command_var},
+		{"var_merge", command_var_merge},
+		{"var_copy",  command_var_copy},
 		{"var_unset", command_var_unset},
 		{"show",      command_show},
 		{"show_i",    command_show_i},
@@ -117,6 +129,8 @@ namespace cli {
 		{"print",     "prints a text"},
 		{"print_i",   "prints a text without new line"},
 		{"var",       "defines or changes a variable"},
+		{"var_merge", "concatenates the second variable with first one"},
+		{"var_copy",  "copies the second variable to first one"},
 		{"var_unset", "destroys a variable"},
 		{"show",      "shows the specified system variable"},
 		{"show_i",    "shows the specified system variable without new line"},
@@ -255,7 +269,46 @@ namespace cli {
 		
 		if (value == "+input") getline(cin, value);
 		
+		util::replace_with_special_chars(&value);
 		variables[key] = value;
+	}
+	
+	void command_var_merge(const string &args) {
+		string arg1 = args.substr(0, args.find(' '));
+		if (arg1.empty()) {
+			command_line::error_out("no variable mentioned");
+			return;
+		}
+		
+		string arg2 = args.substr(args.find_first_of(" \t") + 1);
+		util::trim(&arg2);
+		if (arg2 == arg1) {
+			command_line::error_out("no variable mentioned to merge with");
+			return;
+		}
+		
+		if (variables.find(arg1) != variables.end() && variables.find(arg2) != variables.end()) {
+			variables[arg1] += variables[arg2];
+		} else command_line::error_out("invalid variable name given");
+	}
+	
+	void command_var_copy(const string &args) {
+		string arg1 = args.substr(0, args.find(' '));
+		if (arg1.empty()) {
+			command_line::error_out("no variable mentioned");
+			return;
+		}
+		
+		string arg2 = args.substr(args.find_first_of(" \t") + 1);
+		util::trim(&arg2);
+		if (arg2 == arg1) {
+			command_line::error_out("no variable mentioned to copy");
+			return;
+		}
+		
+		if (variables.find(arg1) != variables.end() && variables.find(arg2) != variables.end()) {
+			variables[arg1] = variables[arg2];
+		} else command_line::error_out("invalid variable name given");
 	}
 	
 	void command_var_unset(const string &args) {
