@@ -1,7 +1,8 @@
 # A Command Line by C++
 
 ### current commands include:
-+ `commands` - shows available commands 
+
++ `commands` - shows available commands
 + `error` - sets the error level
 + `echo` - sets the command line start showing level
 + `exit` - exit console
@@ -18,9 +19,13 @@
 + `math` - evaluates and prints math expressions
 + `math_i` - evaluates and prints math expressions without new line
 + `math_var` - evaluates a math expression inside a variable and replaces the expression with the result
++ `if_s` - executes command if condition based on string comparison is true
++ `if_n` - executes command if condition based on numeric comparison is true
+
 > no harmful or dangerous commands included
 
 ### file interpreter
+
 1. create a file
 2. write commands inside it
 3. open the file with the **CLI**
