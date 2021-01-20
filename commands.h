@@ -98,6 +98,13 @@ namespace cli {
 	 */
 	void command_math_var(const string &);
 	
+	/**
+	 * executes command if condition is true
+	 */
+	void command_if_s(const string &);
+	
+	void command_if_n(const string &);
+	
 	/* commands map */
 	map<string, void (*)(const string &)> commands = {
 		{"commands",  command_commands},
@@ -116,7 +123,9 @@ namespace cli {
 		{"show_i",    command_show_i},
 		{"math",      command_math},
 		{"math_i",    command_math_i},
-		{"math_var",  command_math_var}
+		{"math_var",  command_math_var},
+		{"if_s",      command_if_s},
+		{"if_n",      command_if_n}
 	};
 	
 	/* the description of commands */
@@ -136,7 +145,9 @@ namespace cli {
 		{"show_i",    "shows the specified system variable without new line"},
 		{"math",      "evaluates math expressions and prints it"},
 		{"math_i",    "evaluates math expressions and prints it without new line"},
-		{"math_var",  "evaluates math expression inside a variable and replaces the expression with the result"}
+		{"math_var",  "evaluates math expression inside a variable and replaces the expression with the result"},
+		{"if_s",      "executes the command if the string condition is true"},
+		{"if_n",      "executes the command if the numeric condition is true"}
 	};
 	
 	/* command line variables */
@@ -429,5 +440,53 @@ namespace cli {
 			
 			variables[args] = result;
 		} else command_line::error_out("variable not found");
+	}
+	
+	/**
+	 * the base functionality for if command
+	 */
+	void base_command_if(const string &args, const bool &is_n) {
+		string cond;
+		string command1;
+		string command2;
+		
+		size_t q_mark = args.find('?');
+		if (q_mark == string::npos) {
+			command_line::error_out("no '?' found");
+			return;
+		}
+		cond = args.substr(0, q_mark);
+		util::trim(&cond);
+		
+		if (cond.empty()) {
+			command_line::error_out("no condition");
+			return;
+		}
+		
+		size_t colon = args.find(':');
+		command1 = args.substr(q_mark + 1, (colon - q_mark) - 1);
+		util::trim(&command1);
+		
+		if (colon != string::npos) {
+			command2 = args.substr(colon + 1);
+			util::trim(&command2);
+		}
+		
+		util::replace_with_if_command_special_chars(&cond);
+		util::replace_with_if_command_special_chars(&command1);
+		util::replace_with_if_command_special_chars(&command2);
+		
+		util::replace_with_var(cond, variables);
+		
+		if (util::parse_condition(cond, is_n)) command_line::read_command(command1);
+		else command_line::read_command(command2);
+	}
+	
+	void command_if_s(const string &args) {
+		base_command_if(args, false);
+	}
+	
+	void command_if_n(const string &args) {
+		base_command_if(args, true);
 	}
 }

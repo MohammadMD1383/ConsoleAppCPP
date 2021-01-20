@@ -2,6 +2,12 @@ using namespace std;
 using namespace chrono;
 
 namespace cli::system_vars {
+	/**
+	 * returns the formatted date by given params
+	 *
+	 * @param param the parameters to format
+	 * @return formatted date
+	 */
 	string base_command_show_date(const string &param) {
 		auto now = system_clock::now();
 		time_t time = system_clock::to_time_t(now);
@@ -22,6 +28,12 @@ namespace cli::system_vars {
 		return time_buffer;
 	}
 	
+	/**
+	 * returns the formatted time by given params
+	 *
+	 * @param param the parameters to format
+	 * @return formatted time
+	 */
 	string base_command_show_time(const string &param) {
 		auto now = system_clock::now();
 		time_t time = system_clock::to_time_t(now);
