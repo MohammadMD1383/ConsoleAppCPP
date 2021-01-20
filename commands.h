@@ -99,10 +99,13 @@ namespace cli {
 	void command_math_var(const string &);
 	
 	/**
-	 * executes command if condition is true
+	 * executes command if condition based on string comparison is true
 	 */
 	void command_if_s(const string &);
 	
+	/**
+	 * executes command if condition based on numeric comparison is true
+	 */
 	void command_if_n(const string &);
 	
 	/* commands map */
@@ -154,7 +157,7 @@ namespace cli {
 	map<string, string> variables;
 	
 	/* command line properties */
-	static string cmdline_version = "1.3.3";
+	static string cmdline_version = "1.4.3";
 	static string cmdline_start = "CLI>";
 	static bool cmdline_start_showing = true;
 	static bool cmdline_output_errors = true;
